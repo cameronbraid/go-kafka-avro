@@ -2,11 +2,12 @@ package kafka
 
 import (
 	"encoding/binary"
+	"os"
+	"os/signal"
+
 	"github.com/Shopify/sarama"
 	"github.com/bsm/sarama-cluster"
 	"github.com/linkedin/goavro"
-	"os"
-	"os/signal"
 )
 
 type avroConsumer struct {
@@ -16,8 +17,8 @@ type avroConsumer struct {
 }
 
 type ConsumerCallbacks struct {
-	OnDataReceived func(msg Message)
-	OnError        func(err error)
+	OnDataReceived func(msg Message) bool // return true to continue
+	OnError        func(err error) bool   // return true to continue on error
 	OnNotification func(notification *cluster.Notification)
 }
 
@@ -71,7 +72,9 @@ func (ac *avroConsumer) Consume() {
 	go func() {
 		for err := range ac.Consumer.Errors() {
 			if ac.callbacks.OnError != nil {
-				ac.callbacks.OnError(err)
+				if !ac.callbacks.OnError(err) {
+					ac.Consumer.Close()
+				}
 			}
 		}
 	}()
@@ -91,12 +94,16 @@ func (ac *avroConsumer) Consume() {
 			if ok {
 				msg, err := ac.ProcessAvroMsg(m)
 				if err != nil {
-					ac.callbacks.OnError(err)
+					if !ac.callbacks.OnError(err) {
+						return
+					}
+				}
+				if ac.callbacks.OnDataReceived != nil {
+					if !ac.callbacks.OnDataReceived(msg) {
+						return
+					}
 				}
 				ac.Consumer.MarkOffset(m, "")
-				if ac.callbacks.OnDataReceived != nil {
-					ac.callbacks.OnDataReceived(msg)
-				}
 			}
 		case <-signals:
 			return
