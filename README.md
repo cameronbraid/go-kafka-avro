@@ -34,5 +34,4 @@ $ go get github.com/dangkaka/go-kafka-avro
 
 * Kafka [sarama](https://github.com/Shopify/sarama)
 * Encodes and decodes Avro data [goavro](https://github.com/linkedin/goavro)
-* Consumer group [sarama-cluster](https://github.com/bsm/sarama-cluster)
 * [schema-registry](https://github.com/confluentinc/schema-registry)

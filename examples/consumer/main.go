@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/dangkaka/go-kafka-avro"
-	"github.com/bsm/sarama-cluster"
 )
 
 var kafkaServers = []string{"localhost:9092"}
@@ -17,9 +17,6 @@ func main() {
 		},
 		OnError: func(err error) {
 			fmt.Println("Consumer error", err)
-		},
-		OnNotification: func(notification *cluster.Notification) {
-			fmt.Println(notification)
 		},
 	}
 
